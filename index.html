@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>UNDERSTORY — keep the forest by taking one tree a year</title>
+<meta name="description" content="You keep an old-growth forest. Your only tool is absence. Fell one tree each year, watch the light find the floor, and sculpt forty years of a real forest's succession — for the ancient oak's line, if you can raise it.">
+<meta property="og:title" content="UNDERSTORY">
+<meta property="og:description" content="Gardening by removal alone. Fell one tree a year. Watch real canopy-light succession run in the gap you open.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%B2%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg-deep: #0d1a12;
+    --bg-mid: #142a1c;
+    --canopy: #0a140d;
+    --ink: #eae3d0;
+    --ink-soft: #b7c2af;
+    --gold: #d9a441;
+    --gold-dim: rgba(217,164,65,0.35);
+    --ray: rgba(255,214,120,0.10);
+    --line: rgba(234,227,208,0.14);
+    --beech: #4f7a4a;
+    --oak: #8a5a2b;
+    --oak-ancient: #d9a441;
+    --pine: #1f5c3a;
+    --birch: #cfd9c8;
+    --bramble: #7a3b3b;
+    --floor: #e8c98a;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg-deep);
+    color: var(--ink);
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  body {
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse at 30% 0%, var(--ray), transparent 55%),
+      radial-gradient(ellipse at 80% 20%, var(--ray), transparent 45%),
+      linear-gradient(180deg, var(--bg-mid), var(--bg-deep) 60%);
+  }
+  #app {
+    width: 100%;
+    max-width: 480px;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    position: relative;
+  }
+  .screen { display: none; flex: 1; flex-direction: column; padding: 20px 18px 24px; }
+  .screen.active { display: flex; }
+
+  h1 { font-size: 1.8rem; margin: 0 0 6px; letter-spacing: 0.02em; color: var(--gold); }
+  h2 { font-size: 1.2rem; margin: 0 0 10px; color: var(--gold); }
+  p { line-height: 1.5; color: var(--ink-soft); margin: 0 0 12px; }
+  .pitch { font-style: italic; color: var(--ink); }
+
+  button {
+    font-family: Georgia, 'Times New Roman', serif;
+    cursor: pointer;
+    border: none;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px 18px;
+    margin-top: 10px;
+    background: var(--gold);
+    color: #241505;
+    font-size: 1.05rem;
+    border-radius: 10px;
+    font-weight: bold;
+    letter-spacing: 0.01em;
+  }
+  .btn:active { transform: translateY(1px); }
+  .btn.secondary {
+    background: transparent;
+    color: var(--ink);
+    border: 1px solid var(--line);
+    font-weight: normal;
+  }
+  .link {
+    background: none;
+    color: var(--ink-soft);
+    text-decoration: underline;
+    padding: 8px 0;
+    font-size: 0.95rem;
+    text-align: left;
+  }
+
+  /* --- title --- */
+  #titleScreen { justify-content: center; text-align: center; }
+  .title-tree { font-size: 3rem; margin-bottom: 8px; }
+  .kernel { font-size: 0.85rem; color: var(--ink-soft); margin-top: 4px; }
+
+  /* --- howto --- */
+  .howto-step { display: flex; gap: 10px; margin-bottom: 14px; align-items: flex-start; }
+  .howto-num {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+    background: var(--gold-dim); color: var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: bold; font-size: 0.85rem;
+  }
+
+  /* --- play screen --- */
+  #playScreen { padding: 14px 14px 18px; }
+  .play-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .year-label { font-size: 1.1rem; color: var(--gold); font-weight: bold; }
+  .fell-label { font-size: 0.8rem; color: var(--ink-soft); }
+  .quest-text { font-size: 0.88rem; color: var(--ink-soft); margin: 4px 0 2px; line-height: 1.35; }
+  .deer-text { font-size: 0.8rem; color: var(--ink-soft); font-style: italic; margin: 0 0 8px; }
+
+  #forestGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+    background: var(--canopy);
+    border-radius: 10px;
+    padding: 6px;
+    aspect-ratio: 1 / 1;
+    margin: 8px 0 10px;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
+  }
+  .cell {
+    position: relative;
+    background: rgba(255,255,255,0.02);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    padding: 0;
+    transition: background 0.4s ease;
+  }
+  .cell.light-high { background: rgba(232,201,138,0.22); }
+  .cell.light-mid { background: rgba(232,201,138,0.10); }
+  .cell.selected { outline: 2px solid var(--gold); outline-offset: -2px; }
+  .plant {
+    border-radius: 50%;
+    transition: width 0.5s ease, height 0.5s ease, background 0.5s ease, box-shadow 0.5s ease;
+  }
+  .plant.sp-beech { background: radial-gradient(circle at 35% 30%, #6a9a63, var(--beech)); }
+  .plant.sp-oak { background: radial-gradient(circle at 35% 30%, #b07a3f, var(--oak)); }
+  .plant.sp-oak.lineage-ancient { background: radial-gradient(circle at 35% 30%, #f0c368, var(--oak-ancient)); box-shadow: 0 0 8px var(--gold); }
+  .plant.sp-oak.lineage-heir { box-shadow: 0 0 6px var(--gold-dim); border: 1px solid var(--gold); }
+  .plant.sp-pine {
+    border-radius: 15% 15% 50% 50%;
+    background: radial-gradient(circle at 40% 25%, #2e7a4c, var(--pine));
+  }
+  .plant.sp-birch {
+    background:
+      repeating-linear-gradient(90deg, rgba(60,55,45,0.5) 0 2px, transparent 2px 9px),
+      var(--birch);
+  }
+  .plant.sp-bramble {
+    border-radius: 30%;
+    transform: rotate(12deg);
+    background: radial-gradient(circle at 40% 30%, #a25a5a, var(--bramble));
+  }
+
+  .selected-panel, .events-panel {
+    position: absolute;
+    left: 14px; right: 14px; bottom: 14px;
+    background: var(--bg-mid);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+    display: none;
+  }
+  .selected-panel.open, .events-panel.open { display: block; }
+  .panel-title { font-size: 1.05rem; color: var(--gold); margin-bottom: 4px; }
+  .panel-body { font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 12px; line-height: 1.4; }
+  .panel-actions { display: flex; gap: 10px; }
+  .panel-actions .btn { margin-top: 0; }
+  .events-list { list-style: none; margin: 0 0 12px; padding: 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .events-list li { margin-bottom: 6px; line-height: 1.4; }
+  .events-list li::before { content: "· "; color: var(--gold); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; font-size: 0.72rem; color: var(--ink-soft); }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+  /* --- final --- */
+  #finalScreen { text-align: left; }
+  .composition-line { font-size: 0.95rem; color: var(--ink); margin-bottom: 8px; }
+  .oak-line-text { font-size: 1rem; color: var(--gold); margin-bottom: 16px; line-height: 1.5; }
+  textarea#shareText {
+    width: 100%; min-height: 64px; resize: none;
+    background: var(--bg-mid); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px; font-family: Georgia, serif; font-size: 0.85rem;
+  }
+
+  .top-nav { display: flex; justify-content: flex-end; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div data-screen="title" id="titleScreen" class="screen active">
+    <div class="title-tree" aria-hidden="true">🌲</div>
+    <h1>UNDERSTORY</h1>
+    <p class="pitch">You keep an old forest. Your only tool is absence.</p>
+    <p>Fell one tree each year. Where the gap opens, light finds the floor — and forty years of real succession run in your hands.</p>
+    <button class="btn" id="startBtn">Begin the survey</button>
+    <button class="btn secondary" id="howtoBtnFromTitle">How this works</button>
+    <p class="kernel">a 40-year game of gardening by subtraction alone</p>
+  </div>
+
+  <div data-screen="howto" id="howtoScreen" class="screen">
+    <h2>How to keep a forest</h2>
+    <div class="howto-step">
+      <div class="howto-num">1</div>
+      <p>Each year you survey the canopy. Every cell holds one tree, or none — light finds the floor only where a tree is gone.</p>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num">2</div>
+      <p>You fell exactly one tree. That's the whole verb. No planting, no watering — the forest does the rest with the light you give it.</p>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num">3</div>
+      <p>Light-loving pioneers race into open gaps. Shade-tolerant trees hold their ground in the dark. Seeds only take root where there's light enough for their kind.</p>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num">4</div>
+      <p>One tree at the center is the ancient oak. Its line — the seedlings descended from it — needs real sun to ever reach the canopy. Its rivals do better shaded.</p>
+    </div>
+    <div class="howto-step">
+      <div class="howto-num">5</div>
+      <p>Forty years, forty gaps. At the end you get the forest's portrait — and the ancient oak's story, whatever it became.</p>
+    </div>
+    <button class="btn" id="howtoBeginBtn">Begin</button>
+    <button class="btn secondary" id="howtoBackBtn">Back</button>
+  </div>
+
+  <div data-screen="play" id="playScreen" class="screen">
+    <div class="play-header">
+      <span class="year-label" id="yearLabel">Year 0 of 40</span>
+      <span class="fell-label" id="fellLabel">tap a tree to fell it</span>
+    </div>
+    <div class="quest-text" id="questText"></div>
+    <div class="deer-text" id="deerText"></div>
+
+    <div id="forestGrid" role="grid" aria-label="the forest canopy, seven by seven"></div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--beech)"></span>beech</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--oak-ancient)"></span>ancient oak</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--oak);border:1px solid var(--gold)"></span>its heirs</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--pine);border-radius:20%"></span>pine</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--birch)"></span>birch</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--bramble);border-radius:30%"></span>bramble</div>
+      <div class="legend-item"><span class="legend-swatch" style="background:var(--floor);opacity:0.5"></span>open floor</div>
+    </div>
+
+    <div class="selected-panel" id="selectedPanel">
+      <div class="panel-title" id="selectedTitle"></div>
+      <div class="panel-body" id="selectedBody"></div>
+      <div class="panel-actions">
+        <button class="btn" id="fellConfirmBtn" style="flex:1">Fell it</button>
+        <button class="btn secondary" id="fellCancelBtn" style="flex:1">Leave it</button>
+      </div>
+    </div>
+
+    <div class="events-panel" id="eventsPanel">
+      <div class="panel-title" id="eventsTitle"></div>
+      <ul class="events-list" id="eventsList"></ul>
+      <button class="btn" id="eventsContinueBtn">Continue</button>
+    </div>
+  </div>
+
+  <div data-screen="final" id="finalScreen" class="screen">
+    <h2>Forty years, forty gaps</h2>
+    <p class="composition-line" id="compositionLine"></p>
+    <p class="oak-line-text" id="oakLineText"></p>
+    <p>Share the forest you kept:</p>
+    <textarea id="shareText" readonly></textarea>
+    <button class="btn" id="copyShareBtn">Copy</button>
+    <button class="btn secondary" id="playAgainBtn">Keep another forest</button>
+  </div>
+
+</div>
+<script type="module" src="./game.js"></script>
+</body>
+</html>
